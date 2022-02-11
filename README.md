@@ -1,5 +1,7 @@
 # TableViewer
  TableViewer
+ 
+* Каждому элементу можно назначать цвет, фон, шрифт и т.д.
 
 Пример использования:
 ```pascal
@@ -76,3 +78,4 @@ begin
   end;
 ```
 
+![image](https://user-images.githubusercontent.com/41462241/153626314-d31ae5fe-9976-4f4f-bb84-836d992798a7.png)
