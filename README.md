@@ -5,7 +5,7 @@
 
 Пример использования:
 ```pascal
-uses dlGUIForm;
+uses dlTableViewer;
 ...
 var Table: TTableView;
 ...
