@@ -1,6 +1,5 @@
-# TableViewer
- TableViewer
- 
+# Custom Grid View (String grid)
+  
 * Каждому элементу можно назначать цвет, фон, шрифт и т.д.
 
 Пример использования:
