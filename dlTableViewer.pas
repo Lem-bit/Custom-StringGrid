@@ -139,7 +139,6 @@ begin
      (FItems.Count > 0) then
       FixedRows:= Byte( FColumns.Visible );
 
-
   inherited;
 end;
 
@@ -151,17 +150,20 @@ begin
 
   Result:= FColumns.Visible;
 
-  if (ARow = 0) and Assigned(FColumns.Item[ACol]) then
-  begin
-    if FColumns.Item[ACol].Hide then
-      ColWidths[ACol]:= -1;
+  if not ((ARow = 0) and Assigned(FColumns.Item[ACol])) then
+    Exit;
 
-    if FColumns.Visible then
-      FColumns.Item[ACol].Draw(Canvas, ARect);
+  if FColumns.Item[ACol].Hide then
+    ColWidths[ACol]:= -1;
 
-    if FColumns.Item[ACol].Animation.Enable then
-      InvalidateCol(ACol);
-  end;
+  if FColumns.Visible then
+    FColumns.Item[ACol].Draw(Canvas, ARect);
+
+  if (RowCount > 0) and (RowHeights[0] <> FColumns.Height) then
+    RowHeights[0]:= FColumns.Height;
+
+  if FColumns.Item[ACol].Action.Enable then
+    InvalidateCol(ACol);
 
 end;
 
@@ -173,9 +175,12 @@ begin
 
   //ACol - X (SubItem), ARow - Y (Item)
   Item:= Items.GetItemObject(ARow - FShowColumns, ACol);
-
   if not Assigned(Item) then
     Exit;
+
+  //Высота ячейки
+  if (Item is TTableItem) and (RowHeights[ARow] <> TTableItem(Item).Height) then
+    RowHeights[ARow]:= TTableItem(Item).Height;
 
   Item.Selected:= (Selection.Top = ARow) or (ifUserSelect in Item.Flags); //Добавить флаги для принудительного выбора
   if not Item.Selected then
@@ -183,8 +188,8 @@ begin
   else
     Item.Draw(Canvas, ARect, FSelectProp);
 
-  if Item.Animation.Enable then
-    InvalidateRect(Handle, ARect, True);
+  if Item.Action.Enable then
+    InvalidateRect(Handle, ARect, False);
 end;
 
 procedure TTableView.Repaint;

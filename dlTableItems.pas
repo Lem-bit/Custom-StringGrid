@@ -2,7 +2,7 @@
 
 interface
 
-uses SysUtils, Classes, dlTableTypes;
+uses SysUtils, Classes, Grids, dlTableTypes;
 
 {
   ====================================================
@@ -13,6 +13,9 @@ uses SysUtils, Classes, dlTableTypes;
   =                                                  =
   ====================================================
 }
+
+const DEF_TEXT_OFFSET = 2;
+      DEF_ITEM_HEIGHT = 20;
 
 type
   TTableItemFlag    = (
@@ -50,6 +53,7 @@ type
       const SELF_INDEX = 0;
     strict private
       FSubItem: TList;
+      FHeight : Integer;
     strict private
       function At(const AIndex: Integer): Boolean;
       function Contains(AValue: Integer; AValueList: TArray<integer>): Boolean;
@@ -64,11 +68,12 @@ type
       function Add(const AText: String): TTableSubItem;
     public
       property SubItem[AIndex: Integer]: TTableSubItem read GetSubItem;
+      property Height: Integer read FHeight write FHeight;
   end;
 
   TTableItemList = class
     strict private
-      FItem: TList;   //Список элементов
+      FItem : TList;   //Список элементов
     strict private
       function At(const AIndex: Integer): Boolean;
       function GetItemCount: Integer;
@@ -98,6 +103,7 @@ implementation
 function TTableItemList.Add(const Text: String): TTableItem;
 begin
   Result:= TTableItem.Create(Text);
+  Result.TextOffset.SetXY(DEF_TEXT_OFFSET, 0);
   FItem.Add(Result);
 end;
 
@@ -116,7 +122,7 @@ end;
 
 constructor TTableItemList.Create;
 begin
-  FItem:= TList.Create;
+  FItem := TList.Create;
 end;
 
 destructor TTableItemList.Destroy;
@@ -174,6 +180,7 @@ end;
 function TTableItem.Add(const AText: String): TTableSubItem;
 begin
   Result:= TTableSubItem.Create(Self, AText);
+  Result.TextOffset.SetXY(DEF_TEXT_OFFSET, 0);
   FSubItem.Add(Result);
 end;
 
@@ -197,6 +204,7 @@ constructor TTableItem.Create(AText: String);
 begin
   inherited Create(AText);
   FSubItem:= TList.Create;
+  FHeight := DEF_ITEM_HEIGHT;
 end;
 
 destructor TTableItem.Destroy;

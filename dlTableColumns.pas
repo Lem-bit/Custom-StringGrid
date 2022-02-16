@@ -2,7 +2,7 @@
 
 interface
 
-uses SysUtils, Classes, Graphics, Windows, dlTableTypes;
+uses SysUtils, Classes, Graphics, Windows, Grids, dlTableTypes;
 
 {
   ====================================================
@@ -13,6 +13,9 @@ uses SysUtils, Classes, Graphics, Windows, dlTableTypes;
   =                                                  =
   ====================================================
 }
+
+const DEF_COLUMN_HEIGHT = 22;
+      DEF_COLUMN_WIDTH  = 50;
 
 type
   TTableColumn = class(TItemObject)
@@ -32,6 +35,7 @@ type
     strict private
       FItem   : TList;     //Список колонок
       FVisible: Boolean;   //Показывать заголовок или нет
+      FHeight : Integer;   //Высота ячеек
     strict private
       function At(const AIndex: Integer): Boolean;
       function GetItemCount: Integer;
@@ -48,6 +52,7 @@ type
       property Count: Integer read GetItemCount;
       property Visible: Boolean read FVisible write FVisible;
       property Item[index: integer]: TTableColumn read GetItem;
+      property Height: Integer read FHeight write FHeight;
   end;
 
 implementation
@@ -65,7 +70,8 @@ end;
 
 constructor TTableColumnList.Create;
 begin
-  FItem:= TList.Create;
+  FItem  := TList.Create;
+  FHeight:= DEF_COLUMN_HEIGHT;
 end;
 
 destructor TTableColumnList.Destroy;
@@ -118,7 +124,8 @@ begin
   for i := 0 to FItem.Count - 1 do
     with TTableColumn(FItem.Items[i]) do
     begin
-      if Hide then Continue;
+      if Hide then
+        Continue;
 
       if AutoSize then
         Inc(CAutoSize, 1)
@@ -127,7 +134,7 @@ begin
     end;
 
   if (CAutoSize = 0) or ((MaxWidth - WDSize) < 0) then
-    exit;
+    Exit;
 
   CalcWidth:= ((MaxWidth - WDSize) div CAutoSize) - (FItem.Count + 1);
   if CalcWidth < 2 then
@@ -137,7 +144,6 @@ begin
     with TTableColumn(FItem.Items[i]) do
      if AutoSize then
        Width:= CalcWidth;
-
 end;
 
 { TTableColumn }
@@ -145,18 +151,10 @@ end;
 constructor TTableColumn.Create(const AText: String);
 begin
   inherited Create(AText);
-  Width   := 50;
+  Width   := DEF_COLUMN_WIDTH;
   AutoSize:= False;
   Hide    := False;
+  Color   := clSilver;
 end;
-
-{procedure TTableColumn.OnAnimation;
-begin
-  inherited;
-
-  TextOffset.X:= TextOffset.X + 1;
-   if TextOffset.X > 100 then
-     TextOffset.X:= 0;
-end;  }
 
 end.
