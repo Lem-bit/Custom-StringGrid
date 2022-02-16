@@ -9,7 +9,7 @@ uses dlTableViewer;
 var Table: TTableView;
 ...
 
-procedure OnAnimation(Sender: TItemObject);
+procedure OnAction(Sender: TItemObject);
 begin
   with TItemObject(Sender) do
   begin
@@ -70,11 +70,12 @@ begin
     //Включение движущегося текста
     
     Item.SetArgs([ofSelfOffset]); //при выборе объекта будет офсет текущего элемента а не выбора
-    Item.OnAnimation:= OnAnimation; //Назначение процедуры "анимации"
-    Item.Animation.Interval:= 50;
-    Item.Animation.Timer:= 0;
-    Item.Animation.Enable:= True;
+    Item.OnAction:= OnAction; //Назначение процедуры "анимации"
+    Item.Action.Interval:= 50;
+    Item.Action.Timer:= 0;
+    Item.Action.Enable:= True;
   end;
 ```
 
-![image](https://user-images.githubusercontent.com/41462241/153626314-d31ae5fe-9976-4f4f-bb84-836d992798a7.png)
+![image](https://user-images.githubusercontent.com/41462241/154248763-f96d00dd-b799-4c52-bfc6-59c0035f9178.png)
+
