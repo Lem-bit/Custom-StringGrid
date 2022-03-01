@@ -89,7 +89,8 @@ type
 
       procedure Clear;
     public
-      function Add(const Text: String): TTableItem;
+      function Add(const AText: String): TTableItem; overload;
+      function Add(const AText: String; const SubItems: array of String): TTableItem; overload;
       property Count: Integer read GetItemCount;
       property Item[index: integer]: TTableItem read GetItem;
 
@@ -100,11 +101,23 @@ implementation
 
 { TTableItemList }
 
-function TTableItemList.Add(const Text: String): TTableItem;
+function TTableItemList.Add(const AText: String): TTableItem;
 begin
-  Result:= TTableItem.Create(Text);
+  Result:= TTableItem.Create(AText);
   Result.TextOffset.SetXY(DEF_TEXT_OFFSET, 0);
   FItem.Add(Result);
+end;
+
+function TTableItemList.Add(const AText: String;
+  const SubItems: array of String): TTableItem;
+begin
+  Result:= Add(AText);
+  if not Assigned(Result) then
+    Exit;
+
+  for var i := 0 to High(SubItems) do
+    Result.Add(SubItems[i]);
+
 end;
 
 function TTableItemList.At(const AIndex: Integer): Boolean;

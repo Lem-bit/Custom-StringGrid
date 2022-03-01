@@ -3,7 +3,7 @@
 interface
 
 uses SysUtils, Graphics, Windows, Controls, Forms, Classes, Grids, dlTableTypes,
-  dlTableColumns, dlTableItems;
+  dlTableColumns, dlTableItems, StdCtrls;
 
 {
   ====================================================
@@ -21,8 +21,14 @@ type
     FColumns   : TTableColumnList;
     FItems     : TTableItemList;
     FSelectProp: TTableSelectProp;
+
+    //Заблокировать сохранение новой ширины столбца
+    FLockWidthChanged: Boolean;
   strict private
     procedure OnAddColumn;
+
+    procedure LockWidthChanged;
+    procedure UnlockWidthChanged;
   published
     procedure ColWidthsChanged; override;
     procedure RowHeightsChanged; override;
@@ -48,21 +54,34 @@ implementation
 { TTableView }
 
 procedure TTableView.ColWidthsChanged;
-var i: integer;
 begin
-
-  if Assigned(FColumns) then
-  for I := 0 to ColCount - 1 do
-    if FColumns.Item[i] <> nil then
-      FColumns.Item[i].Width:= ColWidths[i];
-
   inherited;
+
+  if not Assigned(FColumns) then
+    Exit;
+
+  if FLockWidthChanged then
+    Exit;
+
+  for var i := 0 to ColCount - 1 do
+  begin
+    if not Assigned(FColumns.Item[i]) then
+      Continue;
+
+    FColumns.Item[i].Width:= ColWidths[i];
+  end;
+
 end;
 
 procedure TTableView.RowHeightsChanged;
 begin
   inherited;
 
+end;
+
+procedure TTableView.UnlockWidthChanged;
+begin
+  FLockWidthChanged:= False;
 end;
 
 constructor TTableView.Create(AOwner: TComponent);
@@ -82,6 +101,7 @@ begin
   FColumns      := TTableColumnList.Create;
   FItems        := TTableItemList.Create;
   FSelectProp   := TTableSelectProp.Create('');
+  FSelectProp.TextOffset.SetXY(2, 0);
 
   FColumns.OnAddColumn:= OnAddColumn;
 end;
@@ -111,9 +131,14 @@ begin
   RenderItems(ACol, ARow, ARect, SItem);
 end;
 
+procedure TTableView.LockWidthChanged;
+begin
+  FLockWidthChanged:= True;
+end;
+
 procedure TTableView.OnAddColumn;
 begin
-  RowCount:= RowCount + 1;
+  ColCount:= ColCount + 1;
 end;
 
 procedure TTableView.Paint;
@@ -125,13 +150,15 @@ begin
   begin
     SItem:= Byte( FColumns.Visible );
 
-    if ColCount <> FColumns.Count then
-      ColCount:= FColumns.Count;
-
-    Resize;
+    if FColumns.Count > 0 then
+      if ColCount <> FColumns.Count then
+      begin
+        ColCount:= FColumns.Count;
+        Resize;
+      end;
   end;
 
-  if Assigned(FItems) then
+  if (Assigned(FItems)) and (FItems.Count > 0) then
     if RowCount <> FItems.Count then
       RowCount:= FItems.Count + SItem;
 
@@ -143,27 +170,33 @@ begin
 end;
 
 function TTableView.RenderColumns(ACol, ARow: Longint; ARect: TRect): Boolean;
+var Item: TTableColumn;
 begin
   Result:= False;
   if not Assigned(FColumns) then
     Exit;
 
-  Result:= FColumns.Visible;
-
-  if not ((ARow = 0) and Assigned(FColumns.Item[ACol])) then
+  if not FColumns.Visible then
     Exit;
 
-  if FColumns.Item[ACol].Hide then
-    ColWidths[ACol]:= -1;
-
-  if FColumns.Visible then
-    FColumns.Item[ACol].Draw(Canvas, ARect);
+  Result:= FColumns.Visible;
 
   if (RowCount > 0) and (RowHeights[0] <> FColumns.Height) then
     RowHeights[0]:= FColumns.Height;
 
-  if FColumns.Item[ACol].Action.Enable then
-    InvalidateCol(ACol);
+  Item:= FColumns.Item[ACol];
+  if (ARow <> 0) or (not Assigned(Item)) then
+    Exit;
+
+  if Item.Hide then
+    ColWidths[ACol]:= -1
+  else
+  begin
+    Item.Draw(Canvas, ARect);
+
+    if Item.Action.Enable then
+      InvalidateRect(Handle, ARect, False);
+  end;
 
 end;
 
@@ -189,7 +222,10 @@ begin
     Item.Draw(Canvas, ARect, FSelectProp);
 
   if Item.Action.Enable then
+  begin
     InvalidateRect(Handle, ARect, False);
+  end;
+
 end;
 
 procedure TTableView.Repaint;
@@ -198,17 +234,22 @@ begin
 end;
 
 procedure TTableView.Resize;
-var i: integer;
 begin
   inherited;
 
-  if not Assigned(FColumns) then Exit;
+  if not Assigned(FColumns) then
+    Exit;
+
+  if FColumns.Count < 1 then
+    Exit;
 
   FColumns.Resize(ClientRect);
 
-  for I := 0 to ColCount - 1 do
-    if FColumns.Item[i] <> nil then
+  LockWidthChanged;
+  for var i := 0 to ColCount - 1 do
+    if Assigned(FColumns.Item[i]) then
       ColWidths[i]:= FColumns.Item[i].Width;
+  UnlockWidthChanged;
 
 end;
 

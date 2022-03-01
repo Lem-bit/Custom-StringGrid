@@ -23,12 +23,14 @@ type
       FHide    : Boolean; //Скрыть столбец
       FAutoSize: Boolean; //Авто размер столбца
       FWidth   : Integer; //Ширина столбца
+    strict private
+      procedure SetWidth(AValue: Integer);
     public
       constructor Create(const AText: String);
     public
       property AutoSize: Boolean read FAutoSize write FAutoSize;
       property Hide    : Boolean read FHide     write FHide;
-      property Width   : Integer read FWidth    write FWidth;
+      property Width   : Integer read FWidth    write SetWidth;
   end;
 
   TTableColumnList = class
@@ -116,22 +118,24 @@ var i: integer;
     CAutoSize: Integer; //Кол-во ячеек с авто шириной
     WDSize   : Integer; //Ширина ячеек не AutoSize
     CalcWidth: Integer; //Ширина
+    Item     : TTableColumn;
 begin
   MaxWidth := ARect.Width;
   CAutoSize:= 0;
   WDSize   := 0;
 
   for i := 0 to FItem.Count - 1 do
-    with TTableColumn(FItem.Items[i]) do
-    begin
-      if Hide then
-        Continue;
+  begin
+    Item:= TTableColumn(FItem.Items[i]);
 
-      if AutoSize then
-        Inc(CAutoSize, 1)
-      else
-        Inc(WDSize, Width);
-    end;
+    if Item.Hide then
+      Continue;
+
+    if Item.AutoSize then
+      Inc(CAutoSize, 1)
+    else
+      Inc(WDSize, Item.Width);
+  end;
 
   if (CAutoSize = 0) or ((MaxWidth - WDSize) < 0) then
     Exit;
@@ -141,9 +145,13 @@ begin
     CalcWidth:= 2;
 
   for i := 0 to FItem.Count - 1 do
-    with TTableColumn(FItem.Items[i]) do
-     if AutoSize then
-       Width:= CalcWidth;
+  begin
+    Item:= TTableColumn(FItem.Items[i]);
+    if not Item.AutoSize then
+      Continue;
+
+    Item.Width:= CalcWidth;
+  end;
 end;
 
 { TTableColumn }
@@ -155,6 +163,12 @@ begin
   AutoSize:= False;
   Hide    := False;
   Color   := clSilver;
+  TextOffset.SetXY(1, 1);
+end;
+
+procedure TTableColumn.SetWidth(AValue: Integer);
+begin
+  FWidth:= AValue;
 end;
 
 end.

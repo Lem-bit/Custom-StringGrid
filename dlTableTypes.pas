@@ -17,6 +17,10 @@ uses SysUtils, System.Types, Windows, Graphics;
 const DRAW_OFFSET_CELL  = 1;
       DRAW_OFFSET_IMAGE = 2; //Разделитель картинки и текста
 
+      DRAW_NA         = 0; //Объект не прорисован
+      DRAW_OK         = 1; //Прорисовка объекта успешно завершена
+      DRAW_INVALIDATE = 2; //Нужно обновить данные
+
 type
   TTableViewProcAddColumn = procedure() of Object;
 
@@ -115,7 +119,7 @@ type
 
       FArguments : TItemObjectFlagSet; //Флаги объекта
     strict private
-      procedure DoTimer;
+      function DoTimer: Boolean;
       function SetRectOffset(ARect: TRect; AOffset: Integer): TRect;
 
       function DrawImage(ACanvas: TCanvas; ARect: TRect): Integer;
@@ -125,7 +129,7 @@ type
       constructor Create(const AText: String);
       destructor Destroy; override;
 
-      procedure Draw(ACanvas: TCanvas; ARect: TRect; ACustomProp: TItemObject = nil); virtual;
+      function Draw(ACanvas: TCanvas; ARect: TRect; ACustomProp: TItemObject = nil): Integer; virtual;
 
       procedure SetArgs(AArgSet: TItemObjectFlagSet);
       procedure RemoveArgs(AArgSet: TItemObjectFlagSet);
@@ -300,9 +304,10 @@ begin
   end;
 end;
 
-procedure TItemObject.Draw(ACanvas: TCanvas; ARect: TRect;
-  ACustomProp: TItemObject);
+function TItemObject.Draw(ACanvas: TCanvas; ARect: TRect;
+  ACustomProp: TItemObject): Integer;
 begin
+  Result:= DRAW_NA;
   if not Assigned(ACanvas) then
     Exit;
 
@@ -320,7 +325,10 @@ begin
   if Assigned(OnAfterDraw) then
     OnAfterDraw(Self, ACanvas, ARect);
 
-  DoTimer;
+  Result:= DRAW_OK;
+
+  if DoTimer then
+    Result:= DRAW_INVALIDATE;
 end;
 
 procedure TItemObject.RemoveArgs(AArgSet: TItemObjectFlagSet);
@@ -341,8 +349,9 @@ begin
   Result.Bottom:= ARect.Bottom + AOffset;
 end;
 
-procedure TItemObject.DoTimer;
+function TItemObject.DoTimer: Boolean;
 begin
+  Result:= False;
   if not Assigned(FAction) then
     Exit;
 
@@ -353,6 +362,7 @@ begin
     Exit;
 
   Action.Timer := GetCurrentTime;
+  Result:= True;
 
   if Assigned(OnAction) then
     OnAction(Self);
